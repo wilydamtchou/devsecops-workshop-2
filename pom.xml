@@ -67,36 +67,71 @@
           <artifactId>sonar-maven-plugin</artifactId>
           <version>${sonar.maven.plugin.version}</version>
         </plugin>
-        <plugin>
-          <groupId>org.owasp</groupId>
-          <artifactId>dependency-check-maven</artifactId>
-          <version>${dependency-check.version}</version>
-          <configuration>
-            <format>HTML</format>
-            <failBuildOnCVSS>7</failBuildOnCVSS>
-            <skipProvidedScope>true</skipProvidedScope>
-            <skipTestScope>true</skipTestScope>
-            <nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
-            <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
-            <suppressionFiles>
-              <suppressionFile>dependency-check-suppressions.xml</suppressionFile>
-            </suppressionFiles>
-          </configuration>
-          <executions>
-            <execution>
-              <phase>verify</phase>
-              <goals>
-                <goal>check</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
       <plugin>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-maven</artifactId>
+        <version>${dependency-check.version}</version>
+        <configuration>
+          <format>HTML</format>
+          <failBuildOnCVSS>7</failBuildOnCVSS>
+          <skipProvidedScope>true</skipProvidedScope>
+          <skipTestScope>true</skipTestScope>
+          <nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
+          <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
+          <suppressionFiles>
+            <suppressionFile>dependency-check-suppressions.xml</suppressionFile>
+          </suppressionFiles>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.owasp</groupId>
+        <artifactId>dependency-check-maven</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.pitest</groupId>
+        <artifactId>pitest-maven</artifactId>
+        <version>${pitest.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.pitest</groupId>
+            <artifactId>pitest-junit5-plugin</artifactId>
+            <version>${pitest.junit5.plugin.version}</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <targetClasses>
+            <param>com.m2ibank.*.*</param>
+          </targetClasses>
+          <targetTests>
+            <param>com.m2ibank.*.*</param>
+          </targetTests>
+          <threads>4</threads>
+          <outputFormats>
+            <param>HTML</param>
+            <param>XML</param>
+          </outputFormats>
+          <timestampedReports>false</timestampedReports>
+        </configuration>
+        <executions>
+          <execution>
+            <id>pitest</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>mutationCoverage</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
