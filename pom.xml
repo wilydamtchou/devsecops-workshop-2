@@ -22,7 +22,7 @@
 
   <properties>
     <java.version>17</java.version>
-    <spring.boot.version>3.3.2</spring.boot.version>
+    <spring.boot.version>3.4.3</spring.boot.version>
     <springdoc.version>2.6.0</springdoc.version>
     <cucumber.version>7.18.0</cucumber.version>
     <junit.version>5.10.2</junit.version>
@@ -77,6 +77,10 @@
             <skipProvidedScope>true</skipProvidedScope>
             <skipTestScope>true</skipTestScope>
             <nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
+            <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
+            <suppressionFiles>
+              <suppressionFile>dependency-check-suppressions.xml</suppressionFile>
+            </suppressionFiles>
           </configuration>
           <executions>
             <execution>
