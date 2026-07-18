@@ -206,3 +206,5 @@ jobs:
           -DSONAR_PROJECT_NAME="${{ secrets.SONAR_PROJECT_NAME }}"
           -DSONAR_TOKEN=${{ secrets.SONAR_TOKEN }}
           -DSONAR_HOST_URL=${{ secrets.SONAR_HOST_URL }}
+          -Dsonar.qualitygate.wait=true
+          -Dsonar.qualitygate.timeout=300

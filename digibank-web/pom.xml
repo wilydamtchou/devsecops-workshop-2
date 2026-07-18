@@ -24,18 +24,6 @@
 
         <dependency>
             <groupId>com.m2ibank</groupId>
-            <artifactId>common-module</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.m2ibank</groupId>
-            <artifactId>customer-module</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.m2ibank</groupId>
             <artifactId>customer-module</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -43,18 +31,6 @@
         <dependency>
             <groupId>com.m2ibank</groupId>
             <artifactId>account-module</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.m2ibank</groupId>
-            <artifactId>account-module</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.m2ibank</groupId>
-            <artifactId>transfer-module</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -150,6 +126,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring.boot.version}</version>
                 <configuration>
                     <mainClass>com.m2ibank.web.DigiBankApplication</mainClass>
                 </configuration>
