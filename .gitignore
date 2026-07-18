@@ -44,3 +44,6 @@ logs/
 
 ### Env files ###
 .env
+
+### OWASP Dependency-Check Cache ###
+/odc-data/
