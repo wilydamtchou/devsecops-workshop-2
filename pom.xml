@@ -96,6 +96,7 @@
           <skipProvidedScope>true</skipProvidedScope>
           <skipTestScope>true</skipTestScope>
           <nvdApiKey>${nvd.api.key}</nvdApiKey>
+          <dataDirectory>${project.basedir}/odc-data</dataDirectory>
           <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
           <suppressionFiles>
             <suppressionFile>dependency-check-suppressions.xml</suppressionFile>
