@@ -53,7 +53,6 @@
         <cve>CVE-2026-59083</cve>
         <cve>CVE-2026-59084</cve>
         <cve>CVE-2026-40477</cve>
-        <cve>CVE-2026-40478</cve>
     </suppress>
 
     <!-- Tous les packages Spring Framework et Spring Boot avec CVEs 2026 -->
