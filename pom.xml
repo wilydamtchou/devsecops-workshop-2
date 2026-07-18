@@ -35,6 +35,9 @@
     <sonar.projectKey>digibank-parent</sonar.projectKey>
     <sonar.projectName>DigiBank Parent</sonar.projectName>
     <sonar.host.url>http://localhost:9000</sonar.host.url>
+    <sonar.dependencyCheck.htmlReportPath>target/dependency-check-report.html</sonar.dependencyCheck.htmlReportPath>
+    <sonar.dependencyCheck.jsonReportPath>target/dependency-check-report.json</sonar.dependencyCheck.jsonReportPath>
+    <sonar.pitest.reportPaths>target/pit-reports/mutations.xml</sonar.pitest.reportPaths>
   </properties>
 
 
@@ -83,7 +86,10 @@
         <artifactId>dependency-check-maven</artifactId>
         <version>${dependency-check.version}</version>
         <configuration>
-          <format>HTML</format>
+          <formats>
+            <format>HTML</format>
+            <format>JSON</format>
+          </formats>
           <failBuildOnCVSS>7</failBuildOnCVSS>
           <skipProvidedScope>true</skipProvidedScope>
           <skipTestScope>true</skipTestScope>
