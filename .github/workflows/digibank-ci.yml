@@ -118,15 +118,15 @@ jobs:
           key: ${{ runner.os }}-odc-data
           restore-keys: ${{ runner.os }}-odc-data
 
-      - name: Run OWASP Dependency-Check
-        run: mvn -B org.owasp:dependency-check-maven:check
+      - name: Run OWASP Dependency-Check (aggregate report)
+        run: mvn -B org.owasp:dependency-check-maven:aggregate
 
       - name: Upload OWASP Dependency-Check Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dependency-check-reports
-          path: '**/target/dependency-check-report.*'
+          path: target/dependency-check-report.*
 
   # 5) PITest mutation testing
   pitest:
@@ -186,7 +186,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: dependency-check-reports
-          path: .
+          path: target
 
       - name: Download PITest reports
         uses: actions/download-artifact@v4
