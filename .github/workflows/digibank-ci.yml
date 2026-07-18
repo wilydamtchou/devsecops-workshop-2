@@ -60,7 +60,7 @@ jobs:
           cache: maven
 
       - name: Run unit tests
-        run: mvn -B test -Dtest='!RunCucumberTest' -DfailIfNoTests=false
+        run: mvn -B test -Dtest='!RunCucumberTest' -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false
 
       - name: Upload unit test reports
         if: always()
@@ -86,7 +86,7 @@ jobs:
           cache: maven
 
       - name: Run Cucumber tests
-        run: mvn -B test -Dtest='RunCucumberTest' -DfailIfNoTests=false
+        run: mvn -B test -Dtest='RunCucumberTest' -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false
 
       - name: Upload Cucumber test reports
         if: always()
