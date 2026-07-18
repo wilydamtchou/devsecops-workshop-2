@@ -35,6 +35,7 @@
     <sonar.projectName>${env.SONAR_PROJECT_NAME}</sonar.projectName>
     <sonar.dependencyCheck.htmlReportPath>target/dependency-check-report.html</sonar.dependencyCheck.htmlReportPath>
     <sonar.dependencyCheck.jsonReportPath>target/dependency-check-report.json</sonar.dependencyCheck.jsonReportPath>
+    <sonar.dependencyCheck.reportPath>target/dependency-check-report.xml</sonar.dependencyCheck.reportPath>
     <sonar.pitest.reportPaths>target/pit-reports/mutations.xml</sonar.pitest.reportPaths>
     <sonar.token>${env.SONAR_TOKEN}</sonar.token>
     <sonar.login>${env.SONAR_TOKEN}</sonar.login>
@@ -115,6 +116,7 @@
           <formats>
             <format>HTML</format>
             <format>JSON</format>
+            <format>XML</format>
           </formats>
           <failBuildOnCVSS>7</failBuildOnCVSS>
           <skipProvidedScope>true</skipProvidedScope>
