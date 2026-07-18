@@ -34,10 +34,12 @@
     <surefire.version>3.2.5</surefire.version>
     <sonar.projectKey>digibank-parent</sonar.projectKey>
     <sonar.projectName>DigiBank Parent</sonar.projectName>
-    <sonar.host.url>http://localhost:9000</sonar.host.url>
+    <sonar.host.url>${env.SONAR_HOST_URL}</sonar.host.url>
     <sonar.dependencyCheck.htmlReportPath>target/dependency-check-report.html</sonar.dependencyCheck.htmlReportPath>
     <sonar.dependencyCheck.jsonReportPath>target/dependency-check-report.json</sonar.dependencyCheck.jsonReportPath>
     <sonar.pitest.reportPaths>target/pit-reports/mutations.xml</sonar.pitest.reportPaths>
+    <sonar.token>${env.SONAR_TOKEN}</sonar.token>
+    <nvd.api.key>${env.NVD_API_KEY}</nvd.api.key>
   </properties>
 
 
@@ -93,7 +95,7 @@
           <failBuildOnCVSS>7</failBuildOnCVSS>
           <skipProvidedScope>true</skipProvidedScope>
           <skipTestScope>true</skipTestScope>
-          <nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
+          <nvdApiKey>${nvd.api.key}</nvdApiKey>
           <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
           <suppressionFiles>
             <suppressionFile>dependency-check-suppressions.xml</suppressionFile>
