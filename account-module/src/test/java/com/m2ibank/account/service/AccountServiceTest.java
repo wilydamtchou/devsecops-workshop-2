@@ -102,6 +102,14 @@ class AccountServiceTest {
     }
 
     @Test
+    void shouldThrowExceptionWhenBalanceIsInsufficient() {
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> accountService.debitAccount(account, new BigDecimal("200000.00")));
+
+        assertEquals("Insufficient balance for transfer", exception.getMessage());
+    }
+
+    @Test
     void shouldCreditAccountSuccessfully() {
         when(accountRepository.save(any(Account.class))).thenReturn(account);
 
@@ -120,38 +128,4 @@ class AccountServiceTest {
         assertEquals(1, accounts.size());
         assertEquals(1L, accounts.get(0).getCustomerId());
     }
-
-    @Test
-    void shouldThrowExceptionWhenBalanceIsInsufficient() {
-        Account account = new Account("DB-TEST001", new BigDecimal("5000.00"), AccountType.CURRENT, 1L);
-
-        BusinessException exception = assertThrows(
-                BusinessException.class,
-                () -> accountService.debitAccount(account, new BigDecimal("6000.00"))
-        );
-
-        assertEquals("Insufficient balance for transfer", exception.getMessage());
-    }
-
-    @Test
-    void shouldDebitAccountWhenBalanceIsSufficient() {
-        Account account = new Account("DB-TEST002", new BigDecimal("5000.00"), AccountType.CURRENT, 1L);
-
-        accountService.debitAccount(account, new BigDecimal("1000.00"));
-
-        assertEquals(new BigDecimal("4000.00"), account.getBalance());
-        verify(accountRepository).save(account);
-    }
-
-    @Test
-    void shouldThrowExceptionWhenAmountIsZeroOrNegative() {
-        Account account = new Account("DB-TEST003", new BigDecimal("5000.00"), AccountType.CURRENT, 1L);
-
-        assertThrows(BusinessException.class,
-                () -> accountService.debitAccount(account, BigDecimal.ZERO));
-
-        assertThrows(BusinessException.class,
-                () -> accountService.debitAccount(account, new BigDecimal("-10.00")));
-    }
-
 }

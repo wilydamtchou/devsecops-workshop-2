@@ -7,8 +7,8 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
-    show-sql: false
+      ddl-auto: update
+    show-sql: true
     open-in-view: false
     properties:
       hibernate:
@@ -17,7 +17,7 @@ spring:
           time_zone: UTC
 
   thymeleaf:
-    cache: true
+    cache: false
 
   sql:
     init:
@@ -32,18 +32,15 @@ server:
 
 springdoc:
   api-docs:
-    enabled: false
+    path: /api-docs
   swagger-ui:
-    enabled: false
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
 
 logging:
   level:
     root: INFO
     org.springframework.web: INFO
-    org.hibernate.SQL: INFO
-    org.hibernate.type.descriptor.sql.BasicBinder: INFO
-
-error:
-  include-message: never
-  include-binding-errors: never
-  include-stacktrace: never
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

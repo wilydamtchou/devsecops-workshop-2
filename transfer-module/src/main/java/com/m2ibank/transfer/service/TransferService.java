@@ -25,26 +25,8 @@ public class TransferService {
 
     @Transactional
     public TransferResponse createTransfer(TransferRequest request) {
-        if (request == null) {
-            throw new BusinessException("Transfer request must not be null");
-        }
-
-        if (request.getSourceAccountId() == null || request.getDestinationAccountId() == null) {
-            throw new BusinessException("Source and destination accounts are required");
-        }
-
         if (request.getSourceAccountId().equals(request.getDestinationAccountId())) {
             throw new BusinessException("Source and destination accounts must be different");
-        }
-
-        if (request.getAmount() == null || request.getAmount().signum() <= 0) {
-            throw new BusinessException("Transfer amount must be greater than zero");
-        }
-
-        String description = request.getDescription() == null ? "" : request.getDescription().trim();
-
-        if (description.length() > 255) {
-            throw new BusinessException("Transfer description is too long");
         }
 
         Account sourceAccount = accountService.getAccountEntityById(request.getSourceAccountId());
@@ -57,7 +39,7 @@ public class TransferService {
                 request.getSourceAccountId(),
                 request.getDestinationAccountId(),
                 request.getAmount(),
-                description
+                request.getDescription()
         );
 
         Transfer saved = transferRepository.save(transfer);

@@ -9,7 +9,6 @@ import com.m2ibank.common.exception.ResourceNotFoundException;
 import com.m2ibank.customer.service.CustomerService;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -60,23 +59,13 @@ public class AccountService {
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found with id " + id));
     }
 
-    public void debitAccount(Account account, BigDecimal amount) {
-        if (account == null) {
-            throw new BusinessException("Account must not be null");
-        }
-
-        if (amount == null || amount.signum() <= 0) {
-            throw new BusinessException("Debit amount must be greater than zero");
-        }
-
+    public void debitAccount(Account account, java.math.BigDecimal amount) {
         if (account.getBalance().compareTo(amount) < 0) {
             throw new BusinessException("Insufficient balance for transfer");
         }
-
         account.setBalance(account.getBalance().subtract(amount));
         accountRepository.save(account);
     }
-
 
     public void creditAccount(Account account, java.math.BigDecimal amount) {
         account.setBalance(account.getBalance().add(amount));
