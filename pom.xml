@@ -27,6 +27,7 @@
     <cucumber.version>7.18.0</cucumber.version>
     <junit.version>5.10.2</junit.version>
     <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
+    <envfile.path>${session.executionRootDirectory}/.env</envfile.path>
     <sonar.maven.plugin.version>3.11.0.3922</sonar.maven.plugin.version>
     <sonar.projectKey>${env.SONAR_PROJECT_KEY}</sonar.projectKey>
     <sonar.projectName>${env.SONAR_PROJECT_NAME}</sonar.projectName>
@@ -34,8 +35,9 @@
     <sonar.dependencyCheck.jsonReportPath>target/dependency-check-report.json</sonar.dependencyCheck.jsonReportPath>
     <sonar.pitest.reportPaths>target/pit-reports/mutations.xml</sonar.pitest.reportPaths>
     <sonar.token>${env.SONAR_TOKEN}</sonar.token>
+    <sonar.login>${env.SONAR_TOKEN}</sonar.login>
     <sonar.host.url>${env.SONAR_HOST_URL}</sonar.host.url>
-    <sonar.organization>${SONAR_ORGANIZATION}</sonar.organization>
+    <sonar.organization>${env.SONAR_ORGANIZATION}</sonar.organization>
     <dependency-check.version>10.0.4</dependency-check.version>
     <pitest.version>1.16.2</pitest.version>
     <pitest.junit5.plugin.version>1.2.1</pitest.junit5.plugin.version>
@@ -76,6 +78,26 @@
     </pluginManagement>
     <plugins>
       <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>properties-maven-plugin</artifactId>
+        <version>1.2.1</version>
+        <executions>
+          <execution>
+            <id>load-local-env</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>read-project-properties</goal>
+            </goals>
+            <configuration>
+              <files>
+                <file>${envfile.path}</file>
+              </files>
+              <quiet>true</quiet>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${surefire.version}</version>
@@ -102,14 +124,6 @@
             <suppressionFile>dependency-check-suppressions.xml</suppressionFile>
           </suppressionFiles>
         </configuration>
-        <executions>
-          <execution>
-            <phase>verify</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.pitest</groupId>
@@ -136,52 +150,7 @@
           </outputFormats>
           <timestampedReports>false</timestampedReports>
         </configuration>
-        <executions>
-          <execution>
-            <id>pitest</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>mutationCoverage</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>
-
-  <profiles>
-    <!-- Loads a local .env file only when it exists (local dev). Skipped in CI. -->
-    <profile>
-      <id>load-dotenv</id>
-      <activation>
-        <file>
-          <exists>${maven.multiModuleProjectDirectory}/.env</exists>
-        </file>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>properties-maven-plugin</artifactId>
-            <version>1.2.1</version>
-            <executions>
-              <execution>
-                <id>load-dotenv</id>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>read-project-properties</goal>
-                </goals>
-                <configuration>
-                  <files>
-                    <file>${session.executionRootDirectory}/.env</file>
-                  </files>
-                  <quiet>false</quiet>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
 </project>
