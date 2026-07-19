@@ -185,6 +185,8 @@
               <files>
                 <file>${envfile.path}</file>
               </files>
+              <quiet>true</quiet>
+              <skip>${env.CI}</skip>
             </configuration>
           </execution>
         </executions>
