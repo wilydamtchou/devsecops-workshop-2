@@ -19,19 +19,18 @@ env:
   SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
   NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
 
+# ---------------------------------------------------------
+# 1) BUILD JOB (must run first)
+# ---------------------------------------------------------
 jobs:
-  sast:
-    name: Build + Tests + SAST
+  build:
+    name: Build DigiBank
     runs-on: ubuntu-latest
 
     steps:
-      # 1) Retrieve the source code
-      # Ensures the pipeline works on the latest version of the repository
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2) Install Java 17
-      # Sets up the Java environment required for Maven, Spring Boot, and SAST tools
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
@@ -39,84 +38,154 @@ jobs:
           java-version: 17
           cache: maven
 
-      # 3) Validate Maven project structure
-      # Checks the POM, plugins, dependency tree, and project integrity
       - name: Maven validate
         run: mvn -B validate
 
-      # 4) Compile the project
-      # Ensures the code compiles successfully before running tests or analysis
       - name: Compile
         run: mvn -B clean compile
 
-      # 5) Run unit tests
-      # Executes JUnit tests and generates Surefire reports
-      - name: Unit tests
-        run: mvn -B test -Dtest='!RunCucumberTest'
+  # ---------------------------------------------------------
+  # 2) PARALLEL SAST JOBS (all depend on build)
+  # ---------------------------------------------------------
 
-      # 6) Run BDD tests
-      # Executes Cucumber scenarios to validate business behavior
-      - name: Cucumber tests
-        run: mvn -B test -Dtest='RunCucumberTest'
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: mvn -B test -Dtest='!RunCucumberTest'
 
-      # 7) Generate JaCoCo coverage report
-      # Produces jacoco.xml used by SonarQube for coverage analysis
-      - name: JaCoCo coverage
-        run: mvn -B jacoco:prepare-agent test jacoco:report
+  cucumber-tests:
+    name: Cucumber Tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: mvn -B test -Dtest='RunCucumberTest'
 
-      # 8) Scan for hardcoded secrets
-      # Gitleaks detects API keys, tokens, passwords, and sensitive credentials
-      - name: Gitleaks (Secrets)
-        uses: gitleaks/gitleaks-action@v2
+  jacoco:
+    name: JaCoCo Coverage
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: mvn -B jacoco:prepare-agent test jacoco:report
+
+  gitleaks:
+    name: Secret Scanning (Gitleaks)
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: gitleaks/gitleaks-action@v2
         with:
           args: detect --source . --report-format json --report-path gitleaks-report.json
 
-      # 9) Cache OWASP Dependency-Check database
-      # Speeds up SCA scans by reusing the CVE database
-      - name: Cache OWASP DC
-        uses: actions/cache@v4
+  dependency-check:
+    name: OWASP Dependency-Check
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: actions/cache@v4
         with:
           path: odc-data
           key: ${{ runner.os }}-odc-data
+      - run: mvn -B org.owasp:dependency-check-maven:aggregate
 
-      # 10) Run OWASP Dependency-Check (SCA)
-      # Detects vulnerable libraries based on CVE data
-      - name: OWASP Dependency-Check
-        run: mvn -B org.owasp:dependency-check-maven:aggregate
+  spotbugs:
+    name: SpotBugs
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: mvn -B com.github.spotbugs:spotbugs-maven-plugin:spotbugs
 
-      # 11) Run SpotBugs static analysis
-      # Identifies potential bugs: NPEs, resource leaks, concurrency issues, etc.
-      - name: SpotBugs
-        run: mvn -B com.github.spotbugs:spotbugs-maven-plugin:spotbugs
+  pmd:
+    name: PMD Analysis
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: mvn -B org.apache.maven.plugins:maven-pmd-plugin:pmd
 
-      # 12) Run PMD code quality analysis
-      # Detects dead code, high complexity, bad practices, and maintainability issues
-      - name: PMD
-        run: mvn -B org.apache.maven.plugins:maven-pmd-plugin:pmd
+  checkstyle:
+    name: Checkstyle
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: mvn -B org.apache.maven.plugins:maven-checkstyle-plugin:checkstyle
 
-      # 13) Run Checkstyle
-      # Enforces coding standards and ensures consistent formatting
-      - name: Checkstyle
-        run: mvn -B org.apache.maven.plugins:maven-checkstyle-plugin:checkstyle
+  pitest:
+    name: PITest Mutation Testing
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: mvn -B clean test-compile org.pitest:pitest-maven:mutationCoverage
 
-      # 14) Run PITest mutation testing
-      # Measures the strength and effectiveness of unit tests
-      - name: PITest mutation testing
-        run: mvn -B clean test-compile org.pitest:pitest-maven:mutationCoverage
+  # ---------------------------------------------------------
+  # 3) SONARQUBE (must wait for ALL SAST jobs)
+  # ---------------------------------------------------------
+  sonar:
+    name: SonarQube SAST + Quality Gate
+    runs-on: ubuntu-latest
+    needs:
+      - unit-tests
+      - cucumber-tests
+      - jacoco
+      - gitleaks
+      - dependency-check
+      - spotbugs
+      - pmd
+      - checkstyle
+      - pitest
 
-      # 15) Cache SonarQube dependencies
-      # Improves performance by reusing SonarQube scanner components
-      - name: Cache Sonar
-        uses: actions/cache@v4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: actions/cache@v4
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
-
-      # 16) Run SonarQube SAST + Quality Gate
-      # Aggregates all reports: JaCoCo, SpotBugs, PMD, Checkstyle, OWASP, PITest
-      # Quality Gate enforces security and quality thresholds
-      - name: SonarQube SAST + Quality Gate
-        run: >
+      - run: >
           mvn -B sonar:sonar
           -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
           -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
@@ -124,63 +193,34 @@ jobs:
           -Dsonar.login=${{ secrets.SONAR_TOKEN }}
           -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
           -Dsonar.qualitygate.wait=true
-          -Dsonar.qualitygate.timeout=300
 
-      # 17) Upload all SAST/SCA/QA reports
-      # Allows developers to download and inspect all analysis results
-      - name: Upload SAST reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: sast-reports
-          path: |
-            **/target/surefire-reports/**
-            **/target/jacoco-report/**
-            target/dependency-check-report.*
-            **/target/spotbugsXml.xml
-            **/target/pmd.xml
-            **/target/checkstyle-result.xml
-            **/target/pit-reports/**
-            gitleaks-report.json
-
+  # ---------------------------------------------------------
+  # 4) DOCKER (only if SonarQube passes)
+  # ---------------------------------------------------------
   docker:
-    name: Build Docker image
+    name: Build Docker Image
     runs-on: ubuntu-latest
-    needs: sast
-    # 18) Build Docker image only if SAST pipeline succeeded
-    if: needs.sast.result == 'success'
+    needs: sonar
+    if: needs.sonar.result == 'success'
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - run: docker build -t digibank-app:ci .
 
-      # 19) Build the Docker image
-      # Produces the application container for deployment or vulnerability scanning
-      - name: Build Docker image
-        run: docker build -t digibank-app:ci .
-
+  # ---------------------------------------------------------
+  # 5) TRIVY (only if Docker succeeds)
+  # ---------------------------------------------------------
   trivy:
-    name: Trivy scan
+    name: Trivy Scan
     runs-on: ubuntu-latest
     needs: docker
-    # 20) Run Trivy only if Docker build succeeded
     if: needs.docker.result == 'success'
+
     steps:
-      # 21) Scan the Docker image for vulnerabilities
-      # Trivy detects OS-level and library-level CVEs, misconfigurations, and risks
-      - name: Trivy scan
-        uses: aquasecurity/trivy-action@v0.24.0
+      - uses: aquasecurity/trivy-action@v0.24.0
         with:
           image-ref: digibank-app:ci
           format: 'table'
           exit-code: '1'
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
-
-      # 22) Upload Trivy report
-      # Makes the container vulnerability report available for review
-      - name: Upload Trivy report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: trivy-report
-          path: trivy-report.*
