@@ -53,7 +53,7 @@
     <jacoco.version>0.8.10</jacoco.version>
     <spotbugs.maven.plugin.version>4.8.3.0</spotbugs.maven.plugin.version>
     <pmd.maven.plugin.version>3.21.0</pmd.maven.plugin.version>
-    <checkstyle.maven.plugin.version>3.3.1</checkstyle.maven.plugin.version>
+    <checkstyle.maven.plugin.version>3.5.0</checkstyle.maven.plugin.version>
 
     <jackson-bom.version>2.18.9</jackson-bom.version> <!-- ou plus récent -->
     <postgresql.version>42.7.13</postgresql.version>
@@ -156,18 +156,21 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-checkstyle-plugin</artifactId>
           <version>${checkstyle.maven.plugin.version}</version>
+
+          <dependencies>
+            <dependency>
+              <groupId>com.puppycrawl.tools</groupId>
+              <artifactId>checkstyle</artifactId>
+              <version>10.17.0</version>
+            </dependency>
+          </dependencies>
+
           <configuration>
-            <!-- fichier à la racine du projet parent -->
-            <configLocation>
-              ${maven.multiModuleProjectDirectory}/checkstyle.xml
-            </configLocation>
-            <!-- Génère le rapport sans bloquer la CI -->
+            <configLocation>${maven.multiModuleProjectDirectory}/checkstyle.xml</configLocation>
             <failsOnError>false</failsOnError>
             <outputFile>
               ${project.build.directory}/checkstyle-result.xml
             </outputFile>
-            <encoding>UTF-8</encoding>
-            <consoleOutput>true</consoleOutput>
           </configuration>
         </plugin>
 
