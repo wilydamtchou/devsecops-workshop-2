@@ -157,23 +157,18 @@
           <artifactId>maven-checkstyle-plugin</artifactId>
           <version>${checkstyle.maven.plugin.version}</version>
           <configuration>
-            <configLocation>checkstyle.xml</configLocation>
+            <!-- fichier à la racine du projet parent -->
+            <configLocation>
+              ${maven.multiModuleProjectDirectory}/checkstyle.xml
+            </configLocation>
+            <!-- Génère le rapport sans bloquer la CI -->
             <failsOnError>false</failsOnError>
-            <outputFile>${project.build.directory}/checkstyle-result.xml</outputFile>
+            <outputFile>
+              ${project.build.directory}/checkstyle-result.xml
+            </outputFile>
+            <encoding>UTF-8</encoding>
+            <consoleOutput>true</consoleOutput>
           </configuration>
-          <dependencies>
-            <dependency>
-              <groupId>org.codehaus.plexus</groupId>
-              <artifactId>plexus-container-default</artifactId>
-              <version>2.1.0</version>
-              <exclusions>
-                <exclusion>
-                  <groupId>com.google.collections</groupId>
-                  <artifactId>google-collections</artifactId>
-                </exclusion>
-              </exclusions>
-            </dependency>
-          </dependencies>
         </plugin>
 
         <!-- PITest -->
