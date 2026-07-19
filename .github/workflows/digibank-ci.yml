@@ -1,22 +1,17 @@
-name: DigiBank CI Pipeline
+name: DigiBank CI SAST Pipeline
 
 on:
   push:
-    branches:
-      - main
-      - master
-      - develop
+    branches: [ main, master, develop ]
   pull_request:
-    branches:
-      - main
-      - master
-      - develop
+    branches: [ main, master, develop ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
+  CI: true
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -25,8 +20,10 @@ env:
   SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
   NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
 
+# ---------------------------------------------------------
+# 1) BUILD JOB (must run first)
+# ---------------------------------------------------------
 jobs:
-  # 1) Build & packaging (no tests, no security scan, no analysis)
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -47,9 +44,12 @@ jobs:
       - name: Build Docker image
         run: docker build -t digibank-app:ci .
 
-  # 2) Unit tests (everything except the Cucumber suite)
+  # ---------------------------------------------------------
+  # 2) Tests & Coverage (all depend on build)
+  # ---------------------------------------------------------
+
   unit-tests:
-    name: Tests (Unit Tests)
+    name: Unit Tests
     runs-on: ubuntu-latest
     needs: build
     steps:
@@ -73,9 +73,8 @@ jobs:
           name: unit-test-reports
           path: '**/target/surefire-reports/**'
 
-  # 3) Cucumber (BDD) tests
   cucumber-tests:
-    name: Tests (Cucumber Tests)
+    name: Cucumber Tests
     runs-on: ubuntu-latest
     needs: build
     steps:
@@ -99,11 +98,48 @@ jobs:
           name: cucumber-test-reports
           path: '**/target/surefire-reports/**'
 
-  # 4) OWASP Dependency-Check (SCA)
-  owasp:
-    name: SAST (OWASP Dependency-Check)
+  jacoco:
+    name: JaCoCo Coverage
     runs-on: ubuntu-latest
-    needs: [unit-tests, cucumber-tests]
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: mvn -B jacoco:prepare-agent test jacoco:report
+
+  # ---------------------------------------------------------
+  # 3) PARALLEL SAST JOBS (all depend on tests)
+  # ---------------------------------------------------------
+  gitleaks:
+    name: Secret Scanning (Gitleaks)
+    runs-on: ubuntu-latest
+    needs: [unit-tests, cucumber-tests, jacoco]
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # 🔥 obligatoire pour éviter l’erreur "unknown revision"
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          # 🔥 On laisse Gitleaks gérer le diff PR automatiquement
+          # Pas de "args", car l'action ne supporte pas ce paramètre
+          config-path: ""   # utilise la config par défaut
+
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-results
+          path: results.sarif
+
+  dependency-check:
+    name: Dependency-Check (OWASP Dependency-Check)
+    runs-on: ubuntu-latest
+    needs: [unit-tests, cucumber-tests, jacoco]
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -132,11 +168,58 @@ jobs:
           name: dependency-check-reports
           path: target/dependency-check-report.*
 
-  # 5) PITest mutation testing
-  pitest:
-    name: SAST (PITest Mutation Testing)
+  spotbugs:
+    name: SpotBugs
     runs-on: ubuntu-latest
-    needs: [unit-tests, cucumber-tests]
+    needs: [ unit-tests, cucumber-tests, jacoco ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+      - name: Install project dependencies
+        run: mvn -B clean install -DskipTests
+      - name: Run SpotBugs
+        run: mvn -B spotbugs:spotbugs
+
+  pmd:
+    name: PMD Analysis
+    runs-on: ubuntu-latest
+    needs: [ unit-tests, cucumber-tests, jacoco ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+      - name: Install project dependencies
+        run: mvn -B clean install -DskipTests
+      - name: Run PMD
+        run: mvn -B org.apache.maven.plugins:maven-pmd-plugin:pmd
+
+  checkstyle:
+    name: Checkstyle
+    runs-on: ubuntu-latest
+    needs: [ unit-tests, cucumber-tests, jacoco ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+      - name: Install project dependencies
+        run: mvn -B clean install -DskipTests
+      - name: Run Checkstyle
+        run: mvn -B org.apache.maven.plugins:maven-checkstyle-plugin:checkstyle
+
+  pitest:
+    name: Mutation Testing (PITest)
+    runs-on: ubuntu-latest
+    needs: [unit-tests, cucumber-tests, jacoco]
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -158,53 +241,56 @@ jobs:
           name: pitest-reports
           path: '**/target/pit-reports/**'
 
-  # 6) SonarQube analysis (runs last, consumes OWASP + PITest reports)
+  # ---------------------------------------------------------
+  # 4) SONARQUBE (must wait for ALL SAST jobs)
+  # ---------------------------------------------------------
   sonar:
     name: Gating (SonarQube Analysis)
     runs-on: ubuntu-latest
-    needs: [owasp, pitest]
+    needs:
+      - unit-tests
+      - cucumber-tests
+      - jacoco
+      - gitleaks
+      - dependency-check
+      - spotbugs
+      - pmd
+      - checkstyle
+      - pitest
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history for better SonarQube blame/relevancy
+          fetch-depth: 0
 
-      - name: Set up Java 17
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
           cache: maven
 
-      - name: Cache SonarQube packages
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
 
-      - name: Compile sources for analysis
-        run: mvn -B clean test-compile
+      - run: mvn -B clean package -DskipTests
 
-      - name: Download OWASP Dependency-Check reports
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: dependency-check-reports
           path: target
 
-      - name: Download PITest reports
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: pitest-reports
           path: .
 
-      - name: Run SonarQube analysis
-        run: >
+      - run: >
           mvn -B sonar:sonar
           -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
           -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-          -DSONAR_PROJECT_NAME="${{ secrets.SONAR_PROJECT_NAME }}"
-          -DSONAR_TOKEN=${{ secrets.SONAR_TOKEN }}
-          -DSONAR_HOST_URL=${{ secrets.SONAR_HOST_URL }}
+          -Dsonar.projectName="${{ secrets.SONAR_PROJECT_NAME }}"
+          -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+          -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
           -Dsonar.qualitygate.wait=true
           -Dsonar.qualitygate.timeout=300
