@@ -72,10 +72,6 @@
         <module name="NeedBraces"/>
 
 
-        <!-- Pas de variables locales finales inutiles -->
-        <module name="UnnecessaryFinal"/>
-
-
         <!-- Vérifie les equals/hashCode -->
         <module name="EqualsHashCode"/>
 
