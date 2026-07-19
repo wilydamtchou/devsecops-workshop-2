@@ -1,0 +1,136 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+        "-//Checkstyle//DTD Checkstyle Configuration 10.12//EN"
+        "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<module name="Checker">
+
+    <!-- Encodage -->
+    <property name="charset" value="UTF-8"/>
+
+    <!-- Taille maximale des fichiers -->
+    <module name="FileLength">
+        <property name="max" value="2000"/>
+    </module>
+
+
+    <!-- Contrôle des lignes -->
+    <module name="LineLength">
+        <property name="max" value="120"/>
+        <property name="ignorePattern"
+                  value="^package.*|^import.*|https?://.*"/>
+    </module>
+
+
+    <!-- Vérification des imports -->
+    <module name="TreeWalker">
+
+        <!-- Imports inutilisés -->
+        <module name="AvoidStarImport"/>
+
+        <module name="UnusedImports"/>
+
+
+        <!-- Convention de nommage -->
+
+        <!-- Classes : CustomerService, AccountController -->
+        <module name="TypeName"/>
+
+        <!-- Méthodes : findCustomer(), createAccount() -->
+        <module name="MethodName"/>
+
+        <!-- Variables : customerId -->
+        <module name="LocalVariableName"/>
+
+        <!-- Constantes : MAX_SIZE -->
+        <module name="ConstantName"/>
+
+
+        <!-- Contrôle des méthodes -->
+
+        <!-- Taille maximale d'une méthode -->
+        <module name="MethodLength">
+            <property name="max" value="80"/>
+        </module>
+
+
+        <!-- Nombre maximum de paramètres -->
+        <module name="ParameterNumber">
+            <property name="max" value="6"/>
+        </module>
+
+
+        <!-- Complexité cyclomatique -->
+        <module name="CyclomaticComplexity">
+            <property name="max" value="10"/>
+        </module>
+
+
+        <!-- Bonne pratique Java -->
+
+        <!-- Obligatoire pour les accolades -->
+        <module name="NeedBraces"/>
+
+
+        <!-- Pas de variables locales finales inutiles -->
+        <module name="UnnecessaryFinal"/>
+
+
+        <!-- Vérifie les equals/hashCode -->
+        <module name="EqualsHashCode"/>
+
+
+        <!-- Pas de code vide -->
+        <module name="EmptyStatement"/>
+
+
+        <!-- Pas de conditions inutiles -->
+        <module name="SimplifyBooleanExpression"/>
+
+
+        <!-- Javadoc optionnelle -->
+        <module name="JavadocType">
+            <property name="scope" value="public"/>
+            <property name="allowMissingParamTags" value="true"/>
+        </module>
+
+
+        <!-- Indentation -->
+
+        <module name="Indentation">
+            <property name="basicOffset" value="4"/>
+            <property name="caseIndent" value="4"/>
+        </module>
+
+
+        <!-- Espaces -->
+
+        <module name="WhitespaceAround"/>
+
+        <module name="WhitespaceAfter"/>
+
+
+        <!-- Parenthèses -->
+        <module name="ParenPad"/>
+
+
+        <!-- Contrôle des blocs -->
+
+        <module name="EmptyLineSeparator">
+            <property name="allowNoEmptyLineBetweenFields" value="true"/>
+        </module>
+
+
+        <!-- Ordre des modificateurs -->
+        <module name="ModifierOrder"/>
+
+
+        <!-- Détection de duplication -->
+        <module name="IllegalTokenText">
+            <property name="tokens" value="LITERAL_ASSERT"/>
+        </module>
+
+
+    </module>
+
+</module>
